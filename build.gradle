@@ -1,0 +1,68 @@
+plugins {
+    alias(libs.plugins.loom)
+    alias(libs.plugins.ploceus)
+}
+
+base {
+    archivesName = project.archives_base_name
+}
+version = "${project.version}+mc${project.minecraft_version}"
+group = project.maven_group
+
+sourceSets {
+    standalone
+}
+
+repositories {
+    maven {
+        url = 'https://jitpack.io/'
+    }
+    maven {
+        url = 'https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1'
+    }
+}
+
+dependencies {
+    minecraft libs.minecraft
+    modImplementation libs.loader
+
+    implementation libs.radbus
+    include libs.radbus
+
+    modImplementation libs.devauth
+
+    mappings ploceus.featherMappings(libs.versions.feather.build.get())
+
+    ploceus.dependOsl(libs.versions.osl.get())
+}
+
+processResources {
+    inputs.property 'version', version
+
+    filesMatching('fabric.mod.json') {
+        expand 'version': version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = 'UTF-8'
+    it.options.release = it.name == 'compileStandaloneJava' ? 8 : 25
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    withSourcesJar()
+}
+
+jar {
+    from sourceSets.standalone.output
+    manifest {
+        attributes 'Main-Class': 'org.example.illusion.Main'
+    }
+
+    from('LICENSE') {
+        rename { "${it}_${base.archivesName.get()}" }
+    }
+}
